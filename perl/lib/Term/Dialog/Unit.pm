@@ -14,7 +14,7 @@ sub new {
     }
     
     if (! defined $self->{validation}) {
-        $self->{validation} = sub {return 1};
+        $self->{validation} = [];
     }
     
     if (! defined $self->{commit}) {
@@ -34,7 +34,28 @@ sub do {
     my $input = <STDIN>;
     chomp $input;
     
-    $self->{commit}->($input);
+    $self->{input} = $input;
+    
+    # Validation sequence
+    my @val_errors;
+    for my $vsub ( @{ $self->{validation} } ) {
+        my ($is_valid, $err) = $vsub->($input);
+        if (! $is_valid) {
+            push @val_errors, $err;
+        }
+    }
+    
+    if (scalar @val_errors) {
+        # Flush err message and repeat question.
+        for (@val_errors) {
+            print "- $_\n";
+        }
+        print "Try again.\n";
+        $self->do();
+    }
+    
+    
+    $self->{commit}->($self->{input});
 }
 
 sub _resolve_string {
