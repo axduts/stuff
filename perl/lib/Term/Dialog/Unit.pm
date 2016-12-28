@@ -3,6 +3,8 @@ package Term::Dialog::Unit;
 use strict;
 use warnings;
 
+use Data::Dumper;
+
 sub new {
     my $class = shift;
     my $self = {@_};
@@ -62,7 +64,36 @@ sub _resolve_string {
     my $self = shift;
     my $args = {@_};
     
-    return $args->{string};
+    my $string = $args->{string};
+    
+    my @matches = $string =~ /(\{\{.*?\}\})/g;
+    
+    print Dumper \@matches; die;
+    
+    my ($sub, $params) = $string =~ m/\{\{\s*(.*)\((.*)\)\s*\}\}/g;
+    
+    my @params = ();
+    
+    if ($params) {
+        @params = split(/\s*,\s*/, $params);
+    }
+    
+    my $resolved_value = $self->_dispatch($sub, @params);
+    
+    $string =~ s/\{\{.*\}\}/${resolved_value}/;
+    
+    return $string;
+}
+
+sub _dispatch {
+    my $self = shift;
+    my $sub = shift;
+    my @args = @_;
+    
+    print "S:$sub\n";
+    print Dumper \@args;
+    
+    return "#########";
 }
 
 1;
