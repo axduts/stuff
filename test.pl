@@ -32,10 +32,10 @@ my $dialog = Term::Dialog->new(
         #    }
         #),
         Term::Dialog::Unit->new(
-            question => "What is your gender {{ foo() }} {{ items_row(_gender) }}?",
+            question => "What is your gender {{ foo() }} {{ items_row(_gender) }}? ",
             _gender => ['male', 'female'],
             validation => [
-                'at_list(__INPUT__, _gender)'
+                'at_list(_gender)'
             ],
             commit => sub {
                 $data->{gender} = shift;
