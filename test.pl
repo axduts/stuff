@@ -1,51 +1,41 @@
 use strict;
 use warnings;
 
-use Term::Dialog;
-use Term::Dialog::Unit;
+use DialogSequencer::Dialog;
 
 use Data::Dumper;
 
-my $data = {
-};
+my $data = {};
 
-my $dialog = Term::Dialog->new(
-    queue => [
-        #Term::Dialog::Unit->new(
-        #    question => "Enter user name: ",
-        #    validation => [
-        #        sub {
-        #            if (shift eq '') {
-        #                return (0, 'cant be empty')
-        #            }
-        #            return 1;
-        #        },
-        #        sub {
-        #            if (shift ne 'foo') {
-        #                return (0, 'not a foo user')
-        #            }
-        #            return 1;
-        #        }
-        #    ],
-        #    commit => sub {
-        #        $data->{user} = shift;
-        #    }
-        #),
-        Term::Dialog::Unit->new(
-            question => "What is your gender {{ foo() }} {{ items_row(_gender) }}? ",
-            _gender => ['male', 'female'],
-            validation => [
-                'at_list(_gender)'
-            ],
-            commit => sub {
-                $data->{gender} = shift;
-            }
-        )
-    ]
+my $post_install_top = DialogSequencer::Dialog->new(
+    question => 'Do you want to configure post install [%{options}] [%{default}]?'
 );
 
-$dialog->run();
+    # $post_install_script_list BEGIN
+    my $post_install_script_list = DialogSequencer::Dialog->new(
+        question => 'Enter script path #%{counter}:'
+    );
+    
+        # $post_install_next_script_path BEGIN
+        my $post_install_next_script_path = DialogSequencer::Dialog->new(
+            question => 'Next script path [%{options}] [%{default}]?'
+        );
+        $post_install_next_script_path->route('yes', $post_install_script_list);
+        $post_install_next_script_path->route('no', undef);
+        # $post_install_next_script_path END
+    
+    $post_install_script_list->route('V_FILE_PATH', $post_install_next_script_path);
+    $post_install_script_list->convey(
+        sub {
+            push @{$data->{post_install_scripts}}, shift;
+        }
+    );
+    # $post_install_script_list END
 
-print Dumper $data;
+$post_install_top->route('yes', $post_install_script_list);
+$post_install_top->route('no', undef);
+$post_install_top->map(yes => 1, no => 0);
+$post_install_top->convey(sub {$data->{post_install_required} = shift});
 
+print Dumper $post_install_top;
 
